@@ -1,70 +1,45 @@
 use reqwest::Client;
 
-use crate::models::{
-    connection::ResponseConnections,
-    login::{ErrorResponse, ResponseLoginRequest},
+use crate::{
+    connection::{ConnectionGraphResponse, ResponseConnections},
+    login::try_get_access_token,
 };
 
 pub struct LibreLinkClient {
     client: Client,
+    token: String,
     base_url: String,
 }
 
+pub struct Credentials {
+    pub username: String,
+    pub password: String,
+}
+
 impl LibreLinkClient {
-    pub fn new(base_url: &str) -> Self {
+    pub async fn new(credentials: Credentials) -> Result<Self, Box<dyn std::error::Error>> {
+        let token = try_get_access_token(&credentials.username, &credentials.password).await;
+
+        match token {
+            Ok(token) => Ok(LibreLinkClient {
+                client: Client::new(),
+                token: token,
+                base_url: "https://api.libreview.io".to_string(),
+            }),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub fn from_token(token: String) -> Self {
         LibreLinkClient {
             client: Client::new(),
-            base_url: base_url.to_string(),
+            token: token,
+            base_url: "https://api.libreview.io".to_string(),
         }
     }
 
-    pub async fn try_get_accesss_token(
-        &self,
-        username: &str,
-        password: &str,
-    ) -> Result<String, Box<dyn std::error::Error>> {
-        let url = format!("{}/{}", self.base_url, "llu/auth/login");
-
-        let login_request = serde_json::json!({
-            "email": username,
-            "password": password,
-        });
-
-        let response = self
-            .client
-            .post(url)
-            .header("version", "4.2.1")
-            .header("product", "llu.android")
-            .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
-            .json(&login_request)
-            .send()
-            .await?;
-
-        let text = response.text().await?;
-        let api_response: Result<ResponseLoginRequest, serde_json::Error> =
-            serde_json::from_str(&text);
-
-        match api_response {
-            Ok(response_data) => Ok(response_data.data.auth_ticket.token),
-            Err(_) => {
-                let error_response: ErrorResponse = serde_json::from_str(&text).unwrap();
-                if error_response.status == 2 {
-                    Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        error_response.error.message,
-                    )))
-                } else {
-                    Err(Box::new(std::io::Error::new(
-                        std::io::ErrorKind::Other,
-                        "Unknown error",
-                    )))
-                }
-            }
-        }
-    }
-
-    pub async fn get_connections(&self, token: String) -> Result<(), Box<dyn std::error::Error>> {
-        let url = format!("{}/{}", self.base_url, "llu/connections");
+    pub async fn get_connections(&self) -> Result<ResponseConnections, Box<dyn std::error::Error>> {
+        let url = format!("{}/{}", &self.base_url, "llu/connections");
 
         let response = self
             .client
@@ -72,14 +47,42 @@ impl LibreLinkClient {
             .header("version", "4.7.1")
             .header("product", "llu.android")
             .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
-            .bearer_auth(token)
+            .bearer_auth(&self.token)
             .send()
             .await?;
 
         let api_response: Result<ResponseConnections, reqwest::Error> = response.json().await;
 
-        println!("{:?}", api_response.unwrap());
+        match api_response {
+            Ok(response_data) => Ok(response_data),
+            Err(e) => Err(Box::new(e)),
+        }
+    }
 
-        Ok(())
+    pub async fn get_connection_graph(
+        &self,
+        connection_id: &str,
+    ) -> Result<ConnectionGraphResponse, Box<dyn std::error::Error>> {
+        let url = format!(
+            "{}/{}/{}/{}",
+            &self.base_url, "llu/connections", connection_id, "graph"
+        );
+
+        let response = self
+            .client
+            .get(url)
+            .header("version", "4.7.1")
+            .header("product", "llu.android")
+            .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
+            .bearer_auth(&self.token)
+            .send()
+            .await?;
+
+        let api_response: Result<ConnectionGraphResponse, reqwest::Error> = response.json().await;
+
+        match api_response {
+            Ok(response_data) => Ok(response_data),
+            Err(e) => Err(Box::new(e)),
+        }
     }
 }
