@@ -1,5 +1,5 @@
 [package]
-name = "librelink"
+name = "librelink-client"
 version = "0.1.0"
 edition = "2021"
 authors = ["Nathael Bonnal <pro.nathaelbonnal@gmail.com>"] 
