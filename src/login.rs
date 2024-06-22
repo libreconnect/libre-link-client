@@ -15,8 +15,8 @@ pub struct Data {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthTicket {
     pub token: String,
-    expires: u64,
-    duration: u64,
+    pub expires: u64,
+    pub duration: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

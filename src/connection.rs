@@ -8,100 +8,100 @@ pub struct ResponseConnections {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionGraphResponse {
-    status: i32,
-    data: ConnectionGraphData,
-    ticket: Ticket,
+    pub status: i32,
+    pub data: ConnectionGraphData,
+    pub ticket: Ticket,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Connection {
-    id: String,
+    pub id: String,
     #[serde(rename = "patientId")]
     pub patient_id: String,
-    country: String,
-    status: i32,
+    pub country: String,
+    pub status: i32,
     #[serde(rename = "firstName")]
-    first_name: String,
+    pub first_name: String,
     #[serde(rename = "lastName")]
-    last_name: String,
+    pub last_name: String,
     #[serde(rename = "targetLow")]
-    target_low: i32,
+    pub target_low: i32,
     #[serde(rename = "targetHigh")]
-    target_high: i32,
+    pub target_high: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Sensor {
     #[serde(rename = "deviceId")]
-    device_id: String,
-    sn: String,
-    a: i64,
-    w: i32,
-    pt: i32,
-    s: bool,
-    lj: bool,
+    pub device_id: String,
+    pub sn: String,
+    pub a: i64,
+    pub w: i32,
+    pub pt: i32,
+    pub s: bool,
+    pub lj: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Device {
-    did: String,
-    dtid: i32,
-    v: String,
-    ll: i32,
-    hl: i32,
+    pub did: String,
+    pub dtid: i32,
+    pub v: String,
+    pub ll: i32,
+    pub hl: i32,
     #[serde(rename = "fixedLowAlarmValues")]
-    fixed_low_alarm_values: FixedLowAlarmValues,
-    alarms: bool,
+    pub fixed_low_alarm_values: FixedLowAlarmValues,
+    pub alarms: bool,
     #[serde(rename = "fixedLowThreshold")]
-    fixed_low_threshold: i32,
+    pub fixed_low_threshold: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FixedLowAlarmValues {
-    mgdl: i32,
-    mmoll: f32,
+    pub mgdl: i32,
+    pub mmoll: f32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ticket {
-    token: String,
-    expires: u64,
-    duration: u64,
+    pub token: String,
+    pub expires: u64,
+    pub duration: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionGraphData {
-    connection: Connection,
+    pub connection: Connection,
     #[serde(rename = "activeSensors")]
-    active_sensors: Vec<ActiveSensor>,
+    pub active_sensors: Vec<ActiveSensor>,
     #[serde(rename = "graphData")]
-    graph_data: Vec<GraphData>,
+    pub graph_data: Vec<GraphData>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GraphData {
     #[serde(rename = "FactoryTimestamp")]
-    factory_timestamp: String,
+    pub factory_timestamp: String,
     #[serde(rename = "Timestamp")]
-    timestamp: String,
+    pub timestamp: String,
     #[serde(rename = "type")]
-    _type: i32,
+    pub _type: i32,
     #[serde(rename = "ValueInMgPerDl")]
-    value_in_mg_per_dl: i32,
+    pub value_in_mg_per_dl: i32,
     #[serde(rename = "MeasurementColor")]
-    measurement_color: i32,
+    pub measurement_color: i32,
     #[serde(rename = "GlucoseUnits")]
-    glucose_units: i32,
+    pub glucose_units: i32,
     #[serde(rename = "Value")]
-    value: i32,
+    pub value: i32,
     #[serde(rename = "isHigh")]
-    is_high: bool,
+    pub is_high: bool,
     #[serde(rename = "isLow")]
-    is_low: bool,
+    pub is_low: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ActiveSensor {
-    sensor: Sensor,
-    device: Device,
+    pub sensor: Sensor,
+    pub device: Device,
 }
