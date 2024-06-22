@@ -2,6 +2,7 @@ use reqwest::Client;
 
 use crate::{
     connection::{ConnectionGraphResponse, ResponseConnections},
+    glucose::GlucoseHistoryRequest,
     login::try_get_access_token,
 };
 
@@ -79,6 +80,32 @@ impl LibreLinkClient {
             .await?;
 
         let api_response: Result<ConnectionGraphResponse, reqwest::Error> = response.json().await;
+
+        match api_response {
+            Ok(response_data) => Ok(response_data),
+            Err(e) => Err(Box::new(e)),
+        }
+    }
+
+    pub async fn get_glucose_history(
+        &self,
+        num_periods: i32,
+        period: i32,
+    ) -> Result<GlucoseHistoryRequest, Box<dyn std::error::Error>> {
+        let url = format!(
+            "{}/{}?numPeriods={}&period={}",
+            &self.base_url, "glucoseHistory", num_periods, period
+        );
+
+        let response = self
+            .client
+            .get(url)
+            .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
+            .bearer_auth(&self.token)
+            .send()
+            .await?;
+
+        let api_response: Result<GlucoseHistoryRequest, reqwest::Error> = response.json().await;
 
         match api_response {
             Ok(response_data) => Ok(response_data),
