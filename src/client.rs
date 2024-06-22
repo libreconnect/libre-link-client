@@ -24,7 +24,7 @@ impl LibreLinkClient {
         match token {
             Ok(token) => Ok(LibreLinkClient {
                 client: Client::new(),
-                token: token,
+                token,
                 base_url: "https://api.libreview.io".to_string(),
             }),
             Err(e) => Err(e),
@@ -34,7 +34,7 @@ impl LibreLinkClient {
     pub fn from_token(token: String) -> Self {
         LibreLinkClient {
             client: Client::new(),
-            token: token,
+            token,
             base_url: "https://api.libreview.io".to_string(),
         }
     }

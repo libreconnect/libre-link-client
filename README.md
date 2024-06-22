@@ -55,4 +55,4 @@ The creation of the client from credentials is asynchronous because the client m
 
 ## Documentation
 
-Checkout our [documentation crates.io](https://docs.rs/librelink-client/0.1.1/librelink_client/index.html).
+Checkout our [documentation crates.io](https://docs.rs/librelink-client/0.1.2/librelink_client/index.html).
