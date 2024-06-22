@@ -6,6 +6,7 @@ authors = ["Nathael Bonnal <pro.nathaelbonnal@gmail.com>"]
 description = "SDK for LibreLink"
 license = "MIT"
 readme = "README.md"
+documentation = "https://docs.rs/librelink-client"
 repository = "https://github.com/libreconnect/libre-link-client"
 
 [dependencies]
