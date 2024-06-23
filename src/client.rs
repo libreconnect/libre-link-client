@@ -2,7 +2,7 @@ use reqwest::Client;
 
 use crate::{
     connection::{ConnectionGraphResponse, ResponseConnections},
-    glucose::GlucoseHistoryRequest,
+    glucose::{GlucoseHistoryRequest, LogBookRequest},
     login::try_get_access_token,
 };
 
@@ -106,6 +106,33 @@ impl LibreLinkClient {
             .await?;
 
         let api_response: Result<GlucoseHistoryRequest, reqwest::Error> = response.json().await;
+
+        match api_response {
+            Ok(response_data) => Ok(response_data),
+            Err(e) => Err(Box::new(e)),
+        }
+    }
+
+    pub async fn get_log_book(
+        &self,
+        connection_id: &str,
+    ) -> Result<LogBookRequest, Box<dyn std::error::Error>> {
+        let url = format!(
+            "{}/{}/{}/{}",
+            &self.base_url, "llu/connections", connection_id, "logbook"
+        );
+
+        let response = self
+            .client
+            .get(url)
+            .header("version", "4.7.1")
+            .header("product", "llu.android")
+            .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
+            .bearer_auth(&self.token)
+            .send()
+            .await?;
+
+        let api_response: Result<LogBookRequest, reqwest::Error> = response.json().await;
 
         match api_response {
             Ok(response_data) => Ok(response_data),

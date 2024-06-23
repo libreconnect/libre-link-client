@@ -1,11 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-use crate::connection::Ticket;
+use crate::connection::{GraphData, Ticket};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GlucoseHistoryRequest {
     pub status: i32,
     pub data: GlucoseHistoryData,
+    pub ticket: Ticket,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LogBookRequest {
+    pub status: i32,
+    pub data: Vec<GraphData>,
     pub ticket: Ticket,
 }
 
