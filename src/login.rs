@@ -60,7 +60,7 @@ pub async fn try_get_access_data(
 
     let text = response.text().await?;
 
-    if(text.is_empty() || text.eq_ignore_ascii_case("{}")){
+    if text.is_empty() || text.eq_ignore_ascii_case("{}") {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::Other,
             "No response from Libre Link",
