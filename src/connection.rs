@@ -6,6 +6,19 @@ pub struct ResponseConnections {
     pub data: Vec<Connection>,
 }
 
+/// Response returned when the API requires a regional redirect.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RedirectResponse {
+    pub status: i32,
+    pub data: RedirectData,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RedirectData {
+    pub redirect: bool,
+    pub region: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionGraphResponse {
     pub status: i32,

@@ -7,12 +7,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("LIBRELINK_USERNAME environment variable must be set");
     let password = env::var("LIBRELINK_PASSWORD")
         .expect("LIBRELINK_PASSWORD environment variable must be set");
+    let region = env::var("LIBRELINK_REGION").ok();
 
     println!("Connecting to LibreLink...");
+    if let Some(ref r) = region {
+        println!("Using region: {}", r);
+    }
 
-    let client = LibreLinkClient::new(
+    let mut client = LibreLinkClient::new(
         Credentials { username, password },
-        None,
+        region,
     )
     .await?;
 

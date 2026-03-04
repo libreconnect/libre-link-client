@@ -61,8 +61,7 @@ pub async fn try_get_access_data(
     let text = response.text().await?;
 
     if text.is_empty() || text.eq_ignore_ascii_case("{}") {
-        return Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        return Err(Box::new(std::io::Error::other(
             "No response from Libre Link",
         )))
     }
@@ -80,20 +79,13 @@ pub async fn try_get_access_data(
                 .unwrap_or_else(|| "Unknown error".to_string());
 
             if error_response.status == 4 {
-                Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
+                Err(Box::new(std::io::Error::other(
                     "Privacy policy acceptance required, first login using the Libre Linkup app",
                 )))
             } else if error_response.status == 2 {
-                Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    message,
-                )))
+                Err(Box::new(std::io::Error::other(message)))
             } else {
-                Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Unknown error",
-                )))
+                Err(Box::new(std::io::Error::other("Unknown error")))
             }
         }
     }
