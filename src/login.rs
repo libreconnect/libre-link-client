@@ -51,7 +51,7 @@ pub async fn try_get_access_data(
 
     let response = client
         .post(url)
-        .header("version", "4.2.1")
+        .header("version", "4.16.0")
         .header("product", "llu.android")
         .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
         .json(&login_request)

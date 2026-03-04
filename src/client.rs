@@ -84,7 +84,7 @@ impl LibreLinkClient {
             .client
             .get(url)
             .header("User-Agent", "Mozilla/5.0 (iPhone; CPU OS 17_4.1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/17.4.1 Mobile/10A5355d Safari/8536.25")
-            .header("version", "4.12.0")
+            .header("version", "4.16.0")
             .header("product", "llu.ios")
             .header("Content-Type", "application/json;charset=UTF-8")
             .header("account-id", self.get_encoded_account_id())
@@ -97,8 +97,7 @@ impl LibreLinkClient {
 
     pub async fn get_connections(&mut self) -> Result<ResponseConnections, Box<dyn std::error::Error>> {
         let text = self.fetch_connections_raw().await?;
-
-        // Check if the API returned a redirect response (region mismatch)
+        // Check for redirect or error responses before parsing as connections
         if let Ok(redirect) = serde_json::from_str::<RedirectResponse>(&text) {
             if redirect.data.redirect {
                 let creds = self.credentials.as_ref().ok_or_else(|| {
@@ -142,7 +141,7 @@ impl LibreLinkClient {
             .client
             .get(url)
             .header("User-Agent", "Mozilla/5.0 (iPhone; CPU OS 17_4.1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/17.4.1 Mobile/10A5355d Safari/8536.25")
-            .header("version", "4.12.0")
+            .header("version", "4.16.0")
             .header("product", "llu.ios")
             .header("Content-Type", "application/json;charset=UTF-8")
             .header("account-id", self.get_encoded_account_id())
@@ -173,7 +172,7 @@ impl LibreLinkClient {
             .client
             .get(url)
             .header("User-Agent", "Mozilla/5.0 (iPhone; CPU OS 17_4.1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/17.4.1 Mobile/10A5355d Safari/8536.25")
-            .header("version", "4.12.0")
+            .header("version", "4.16.0")
             .header("product", "llu.ios")
             .header("Content-Type", "application/json;charset=UTF-8")
             .header("account-id", self.get_encoded_account_id())
@@ -202,7 +201,7 @@ impl LibreLinkClient {
         let response = self
             .client
             .get(url)
-            .header("version", "4.7.1")
+            .header("version", "4.16.0")
             .header("product", "llu.android")
             .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
             .bearer_auth(&self.token)
