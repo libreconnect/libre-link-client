@@ -1,6 +1,6 @@
 use crate::login::DataUser;
 use crate::{
-    connection::{ConnectionGraphResponse, ResponseConnections},
+    connection::{ConnectionGraphResponse, RedirectResponse, ResponseConnections},
     glucose::{GlucoseHistoryRequest, LogBookRequest},
     login::try_get_access_data,
 };
@@ -13,8 +13,10 @@ pub struct LibreLinkClient {
     user_data: DataUser,
     base_url: Option<String>,
     region: Option<String>,
+    credentials: Option<Credentials>,
 }
 
+#[derive(Clone)]
 pub struct Credentials {
     pub username: String,
     pub password: String,
@@ -35,6 +37,7 @@ impl LibreLinkClient {
                     token: data.auth_ticket.token,
                     region,
                     base_url: None,
+                    credentials: Some(credentials),
                 };
                 client.set_base_url();
                 Ok(client)
@@ -50,6 +53,7 @@ impl LibreLinkClient {
             region,
             user_data: DataUser { id: user_id },
             base_url: None,
+            credentials: None,
         };
         client.set_base_url();
         client
@@ -72,7 +76,7 @@ impl LibreLinkClient {
         hex::encode(hasher.finalize())
     }
 
-    pub async fn get_connections(&self) -> Result<ResponseConnections, Box<dyn std::error::Error>> {
+    async fn fetch_connections_raw(&self) -> Result<String, Box<dyn std::error::Error>> {
         let base_url = self.base_url.clone().unwrap();
         let url = format!("{}/{}", &base_url, "llu/connections");
 
@@ -80,7 +84,7 @@ impl LibreLinkClient {
             .client
             .get(url)
             .header("User-Agent", "Mozilla/5.0 (iPhone; CPU OS 17_4.1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/17.4.1 Mobile/10A5355d Safari/8536.25")
-            .header("version", "4.12.0")
+            .header("version", "4.16.0")
             .header("product", "llu.ios")
             .header("Content-Type", "application/json;charset=UTF-8")
             .header("account-id", self.get_encoded_account_id())
@@ -88,12 +92,39 @@ impl LibreLinkClient {
             .send()
             .await?;
 
-        let api_response: Result<ResponseConnections, reqwest::Error> = response.json().await;
+        Ok(response.text().await?)
+    }
 
-        match api_response {
-            Ok(response_data) => Ok(response_data),
-            Err(e) => Err(Box::new(e)),
+    pub async fn get_connections(&mut self) -> Result<ResponseConnections, Box<dyn std::error::Error>> {
+        let text = self.fetch_connections_raw().await?;
+        // Check for redirect or error responses before parsing as connections
+        if let Ok(redirect) = serde_json::from_str::<RedirectResponse>(&text) {
+            if redirect.data.redirect {
+                let creds = self.credentials.as_ref().ok_or_else(|| {
+                    std::io::Error::other(format!(
+                        "API requires regional redirect to '{}' but no credentials available to re-authenticate. \
+                         Set LIBRELINK_REGION={} or use LibreLinkClient::new() instead of from_token().",
+                        redirect.data.region, redirect.data.region
+                    ))
+                })?;
+
+                // Re-authenticate against the correct regional endpoint
+                let creds = creds.clone();
+                let region = redirect.data.region.clone();
+                let data = try_get_access_data(&creds.username, &creds.password).await?;
+                self.token = data.auth_ticket.token;
+                self.user_data = data.user;
+                self.region = Some(region);
+                self.set_base_url();
+
+                let text = self.fetch_connections_raw().await?;
+                let parsed: ResponseConnections = serde_json::from_str(&text)?;
+                return Ok(parsed);
+            }
         }
+
+        let parsed: ResponseConnections = serde_json::from_str(&text)?;
+        Ok(parsed)
     }
 
     pub async fn get_connection_graph(
@@ -110,7 +141,7 @@ impl LibreLinkClient {
             .client
             .get(url)
             .header("User-Agent", "Mozilla/5.0 (iPhone; CPU OS 17_4.1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/17.4.1 Mobile/10A5355d Safari/8536.25")
-            .header("version", "4.12.0")
+            .header("version", "4.16.0")
             .header("product", "llu.ios")
             .header("Content-Type", "application/json;charset=UTF-8")
             .header("account-id", self.get_encoded_account_id())
@@ -141,7 +172,7 @@ impl LibreLinkClient {
             .client
             .get(url)
             .header("User-Agent", "Mozilla/5.0 (iPhone; CPU OS 17_4.1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/17.4.1 Mobile/10A5355d Safari/8536.25")
-            .header("version", "4.12.0")
+            .header("version", "4.16.0")
             .header("product", "llu.ios")
             .header("Content-Type", "application/json;charset=UTF-8")
             .header("account-id", self.get_encoded_account_id())
@@ -170,7 +201,7 @@ impl LibreLinkClient {
         let response = self
             .client
             .get(url)
-            .header("version", "4.7.1")
+            .header("version", "4.16.0")
             .header("product", "llu.android")
             .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
             .bearer_auth(&self.token)
