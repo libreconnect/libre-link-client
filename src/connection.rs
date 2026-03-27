@@ -6,6 +6,19 @@ pub struct ResponseConnections {
     pub data: Vec<Connection>,
 }
 
+/// Response returned when the API requires a regional redirect.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RedirectResponse {
+    pub status: i32,
+    pub data: RedirectData,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RedirectData {
+    pub redirect: bool,
+    pub region: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConnectionGraphResponse {
     pub status: i32,
@@ -28,6 +41,8 @@ pub struct Connection {
     pub target_low: i32,
     #[serde(rename = "targetHigh")]
     pub target_high: i32,
+    #[serde(rename = "glucoseMeasurement")]
+    pub glucose_measurement: GraphData
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -93,7 +108,7 @@ pub struct GraphData {
     #[serde(rename = "GlucoseUnits")]
     pub glucose_units: i32,
     #[serde(rename = "Value")]
-    pub value: i32,
+    pub value: f32,
     #[serde(rename = "isHigh")]
     pub is_high: bool,
     #[serde(rename = "isLow")]

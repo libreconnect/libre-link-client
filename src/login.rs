@@ -3,13 +3,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseLoginRequest {
     pub status: i32,
-    pub data: Data,
+    pub data: LoginData,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Data {
+pub struct LoginData {
     #[serde(rename = "authTicket")]
     pub auth_ticket: AuthTicket,
+    pub user: DataUser,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DataUser {
+    pub id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -22,7 +28,7 @@ pub struct AuthTicket {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ErrorResponse {
     pub status: i32,
-    pub error: Error,
+    pub error: Option<Error>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,10 +36,10 @@ pub struct Error {
     pub message: String,
 }
 
-pub async fn try_get_access_token(
+pub async fn try_get_access_data(
     username: &str,
     password: &str,
-) -> Result<String, Box<dyn std::error::Error>> {
+) -> Result<LoginData, Box<dyn std::error::Error>> {
     let url = "https://api.libreview.io/llu/auth/login";
 
     let login_request = serde_json::json!({
@@ -45,7 +51,7 @@ pub async fn try_get_access_token(
 
     let response = client
         .post(url)
-        .header("version", "4.2.1")
+        .header("version", "4.16.0")
         .header("product", "llu.android")
         .header("User-Agent", "Apidog/1.0.0 (https://apidog.com)")
         .json(&login_request)
@@ -53,22 +59,33 @@ pub async fn try_get_access_token(
         .await?;
 
     let text = response.text().await?;
+
+    if text.is_empty() || text.eq_ignore_ascii_case("{}") {
+        return Err(Box::new(std::io::Error::other(
+            "No response from Libre Link",
+        )))
+    }
     let api_response: Result<ResponseLoginRequest, serde_json::Error> = serde_json::from_str(&text);
 
     match api_response {
-        Ok(response_data) => Ok(response_data.data.auth_ticket.token),
+        Ok(response_data) => Ok(response_data.data),
         Err(_) => {
             let error_response: ErrorResponse = serde_json::from_str(&text).unwrap();
-            if error_response.status == 2 {
-                Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    error_response.error.message,
+
+            let message: String = error_response
+                .error
+                .as_ref()
+                .map(|e| e.message.clone())
+                .unwrap_or_else(|| "Unknown error".to_string());
+
+            if error_response.status == 4 {
+                Err(Box::new(std::io::Error::other(
+                    "Privacy policy acceptance required, first login using the Libre Linkup app",
                 )))
+            } else if error_response.status == 2 {
+                Err(Box::new(std::io::Error::other(message)))
             } else {
-                Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Unknown error",
-                )))
+                Err(Box::new(std::io::Error::other("Unknown error")))
             }
         }
     }
